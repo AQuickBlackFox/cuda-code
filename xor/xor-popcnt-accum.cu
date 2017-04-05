@@ -26,9 +26,12 @@ __global__ void XorPopCntAccum(int *in1d, int* outd) {
 }
 
 
-int main() {
+int main(int argc, char* argv[]) {
     cudaDeviceProp prop;
     unsigned device = 0;
+    if(argc == 2){
+        device = atoi(argv[1]);
+    }
     cudaSetDevice(device);
     cudaGetDeviceProperties(&prop, device);
     std::cout<<prop.name<<std::endl;
@@ -47,7 +50,7 @@ int main() {
     ops *= WI;
     float et = dt/(float)USECPSEC;
     unsigned long long Mops = ops/1000000;
-    std::cout<<et<<"s for "<< Mops << " XOR+POPCNT+ACCUM"<<std::endl;
+    std::cout<<et<<"s for "<< Mops << " XOR+POPCNT+ACCUM Mops"<<std::endl;
     float tp = (Mops)/(et*1000000);
     std::cout << "throughput: " << tp << " Tops/s" << std::endl;
 }

@@ -10,9 +10,9 @@
 .target sm_50
 .address_size 64
 
-	// .globl	_Z15XnorPopCntAccumPiS_
+	// .globl	XnorPopCntAccum
 
-.visible .entry _Z15XnorPopCntAccumPiS_(
+.visible .entry XnorPopCntAccum(
 	.param .u64 _Z15XnorPopCntAccumPiS__param_0,
 	.param .u64 _Z15XnorPopCntAccumPiS__param_1
 )
