@@ -2,9 +2,7 @@
 #include <stdio.h>
 
 #define ITER 1024*1024*16
-#define SSZ 512
-#define BSZ 7*4
-
+#define WI 512
 
 #include <time.h>
 #include <sys/time.h>
@@ -22,7 +20,7 @@ __global__ void XnorPopCntAccum(int *in1d, int* outd) {
     int in1 = in1d[tx];
     int out = outd[tx];
     for (int i = 0; i < ITER; i++) {
-      out += __popc(!(out ^ in1));
+      out += __popc(~(out ^ in1));
     }
     outd[tx] = out;
 }
@@ -34,18 +32,19 @@ int main() {
     cudaSetDevice(device);
     cudaGetDeviceProperties(&prop, device);
     std::cout<<prop.name<<std::endl;
+    unsigned CU = prop.multiProcessorCount;
     int *in1d, *outd;
-    cudaMalloc((void**)&in1d, SSZ*4);
-    cudaMalloc((void**)&outd, SSZ*4);
-    XnorPopCntAccum<<<1, SSZ>>>(in1d, outd);  // warm up
+    cudaMalloc((void**)&in1d, WI*4);
+    cudaMalloc((void**)&outd, WI*4);
+    XnorPopCntAccum<<<1, WI>>>(in1d, outd);  // warm up
     cudaDeviceSynchronize();
     unsigned long long dt = dtime_usec(0);
-    XnorPopCntAccum<<<BSZ, SSZ>>>(in1d, outd);
+    XnorPopCntAccum<<<CU, WI>>>(in1d, outd);
     cudaDeviceSynchronize();
     dt = dtime_usec(dt);
     unsigned long long ops = ITER;
-    ops *= BSZ;
-    ops *= SSZ;
+    ops *= CU;
+    ops *= WI;
     float et = dt/(float)USECPSEC;
     unsigned long long Mops = ops/1000000;
     std::cout<<et<<"s for "<< Mops << " XNOR+POPCNT+ACCUM"<<std::endl;
