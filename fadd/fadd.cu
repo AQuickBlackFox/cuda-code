@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #define ITER 1024*1024*16
-#define WI 512
 
 #include <time.h>
 #include <sys/time.h>
@@ -29,13 +28,16 @@ __global__ void XnorPopCntAccum(float *in1d, float* outd) {
 int main(int argc, char* argv[]) {
     cudaDeviceProp prop;
     unsigned device = 0;
-    if(argc == 2){
+    unsigned WI = 512;
+    unsigned CU = 28;
+    if(argc == 4){
         device = atoi(argv[1]);
+        WI = atoi(argv[2]);
+        CU = atoi(argv[3]);
     }
     cudaSetDevice(device);
     cudaGetDeviceProperties(&prop, device);
     std::cout<<prop.name<<std::endl;
-    unsigned CU = prop.multiProcessorCount*4;
     float *in1d, *outd;
     cudaMalloc((void**)&in1d, WI*4);
     cudaMalloc((void**)&outd, WI*4);
@@ -50,7 +52,8 @@ int main(int argc, char* argv[]) {
     ops *= WI;
     float et = dt/(float)USECPSEC;
     unsigned long long Mops = ops/1000000;
-    std::cout<<et<<"s for "<< Mops << "FAdd Mops"<<std::endl;
+    std::cout<<"NumThreads = "<<WI<<" NumBlocks = "<<CU<<" ITER = "<<ITER<<std::endl;
+    std::cout<<et<<"s for "<< Mops << " FAdd Mops"<<std::endl;
     float tp = (Mops)/(et*1000000);
     std::cout << "throughput: " << tp << " Tops/s" << std::endl;
 }
