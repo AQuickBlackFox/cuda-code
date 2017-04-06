@@ -36,37 +36,69 @@
 
 BB0_1:
 	xor.b32  	%r9, %r105, %r1;
+	add.s32		%r19, %r9, %r1;
 	xor.b32  	%r12, %r9, %r1;
+	add.s32		%r12, %r12, %r1;
 	xor.b32  	%r15, %r12, %r1;
+	add.s32		%r15 ,%r15 ,%r1;
 	xor.b32  	%r18, %r15, %r1;
+	add.s32		%r18, %r18, %r1;
 	xor.b32  	%r21, %r18, %r1;
+	add.s32		%r21, %r21, %r1;
 	xor.b32  	%r24, %r21, %r1;
+	add.s32		%r24, %r24, %r1;
 	xor.b32  	%r27, %r24, %r1;
+	add.s32		%r27, %r27, %r1;
 	xor.b32  	%r30, %r27, %r1;
+	add.s32		%r30 ,%r30, %r1;
 	xor.b32  	%r33, %r30, %r1;
+	add.s32		%r33, %r33, %r1;
 	xor.b32  	%r36, %r33, %r1;
+	add.s32		%r36, %r36, %r1;
 	xor.b32  	%r39, %r36, %r1;
+	add.s32		%r39, %r39, %r1;
 	xor.b32  	%r42, %r39, %r1;
+	add.s32		%r42, %r42, %r1;
 	xor.b32  	%r45, %r42, %r1;
+	add.s32		%r45, %r45, %r1;
 	xor.b32  	%r48, %r45, %r1;
+	add.s32		%r48, %r48, %r1;
 	xor.b32  	%r51, %r48, %r1;
+	add.s32		%r51, %r51, %r1;
 	xor.b32  	%r54, %r51, %r1;
+	add.s32		%r54, %r54, %r1;
 	xor.b32  	%r57, %r54, %r1;
+	add.s32		%r57, %r57, %r1;
 	xor.b32  	%r60, %r57, %r1;
+	add.s32		%r60, %r60, %r1;
 	xor.b32  	%r63, %r60, %r1;
+	add.s32		%r63, %r63, %r1;
 	xor.b32  	%r66, %r63, %r1;
+	add.s32		%r66, %r66, %r1;
 	xor.b32  	%r69, %r66, %r1;
+	add.s32		%r69, %r69, %r1;
 	xor.b32  	%r72, %r69, %r1;
+	add.s32		%r72, %r72, %r1;
 	xor.b32  	%r75, %r72, %r1;
+	add.s32		%r75, %r75, %r1;
 	xor.b32  	%r78, %r75, %r1;
+	add.s32		%r78, %r78, %r1;
 	xor.b32  	%r81, %r78, %r1;
+	add.s32		%r81, %r81, %r1;
 	xor.b32  	%r84, %r81, %r1;
+	add.s32		%r84, %r84, %r1;
 	xor.b32  	%r87, %r84, %r1;
+	add.s32		%r87, %r87, %r1;
 	xor.b32  	%r90, %r87, %r1;
+	add.s32		%r90, %r90, %r1;
 	xor.b32  	%r93, %r90, %r1;
+	add.s32		%r93, %r93, %r1;
 	xor.b32  	%r96, %r93, %r1;
+	add.s32		%r96, %r96, %r1;
 	xor.b32  	%r99, %r96, %r1;
+	add.s32		%r99, %r99, %r1;
 	xor.b32  	%r102, %r99, %r1;
+	add.s32		%r102, %r102, %r1
 	add.s32 	%r104, %r104, 32;
 	setp.ne.s32	%p1, %r104, 0;
 	@%p1 bra 	BB0_1;
@@ -74,5 +106,3 @@ BB0_1:
 	st.global.u32 	[%rd1], %r102;
 	ret;
 }
-
-
