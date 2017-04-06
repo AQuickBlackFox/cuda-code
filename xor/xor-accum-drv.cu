@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
     std::cout<<name<<std::endl;
     int CU;
     cuDeviceGetAttribute(&CU, CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT, device);
+    CU = CU *4;
     cuCtxCreate(&context, 0, deviceId);
     cuModuleLoad(&module, fileName);
     cuModuleGetFunction(&function, module, kernelName);
@@ -52,7 +53,7 @@ int main(int argc, char* argv[]) {
     ops *= WI;
     float et = dt/(float)USECPSEC;
     unsigned long long Mops = ops/1000000;
-    std::cout<<et<<"s for "<< Mops << " XNOR+POPCNT+ACCUM Mops"<<std::endl;
+    std::cout<<et<<"s for "<< Mops << " XNOR+ACCUM Mops"<<std::endl;
     float tp = (Mops)/(et*1000000);
     std::cout << "throughput: " << tp << " Tops/s" << std::endl;
 }
