@@ -6,6 +6,17 @@
 #define LEN 1024*16
 #define SIZE LEN*sizeof(int)
 
+#include <time.h>
+#include <sys/time.h>
+#define USECPSEC 1000000ULL
+
+unsigned long long dtime_usec(unsigned long long start){
+
+  timeval tv;
+  gettimeofday(&tv, 0);
+  return ((tv.tv_sec*USECPSEC)+tv.tv_usec)-start;
+}
+
 __global__ void reduce0(int *g_idata, int *g_odata)
 {
     __shared__ int sdata[1024];
@@ -181,7 +192,7 @@ reduce6(T *g_idata, T *g_odata, unsigned int n)
 
     __syncthreads();
 
-#if 1
+#if 0
     if ( tid < 32 )
     {
         // Fetch final intermediate sum from 2nd warp
@@ -380,11 +391,18 @@ void doReduce6()
     cudaMemcpy(Bd, B, SIZE, cudaMemcpyHostToDevice);
     dim3 dimGrid(LEN/1024,1,1);
     dim3 dimBlock(1024,1,1);
-    
-    reduce6<int, 1024, true> <<<dimGrid, dim3(1024,1,1), dimBlock.x*2*sizeof(int)>>>(Ad, Bd, LEN);
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    unsigned long long dt = dtime_usec(0);
+    for(int i=0;i<1000*100;i++) {
+        reduce6<int, 1024, true> <<<dimGrid, dim3(1024,1,1), dimBlock.x*2*sizeof(int), stream>>>(Ad, Bd, LEN);
+    }
     cudaDeviceSynchronize();
+    dt = dtime_usec(dt);
     cudaMemcpy(B, Bd, SIZE, cudaMemcpyDeviceToHost);    
     std::cout<<B[0]<<std::endl;
+    double et = dt/(double)USECPSEC;
+    std::cout<<et*10<<std::endl;
     delete A;
     delete B;
     cudaFree(Ad);
@@ -396,9 +414,9 @@ void doReduce6()
 
 
 int main(){
-    doReduce0();
-    doReduce1();
-    doReduce2();
-    doReduce3();
+//    doReduce0();
+//    doReduce1();
+//    doReduce2();
+//    doReduce3();
     doReduce6();
 }
