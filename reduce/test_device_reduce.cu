@@ -1,14 +1,7 @@
 #include<cuda.h>
 #include"cuda_runtime_api.h"
 #include<iostream>
-
-/*
-#include <cub/block/block_load.cuh>
-#include <cub/block/block_store.cuh>
-#include <cub/block/block_reduce.cuh>
-
-using namespace cub;
-*/
+#include<cassert>
 
 template<typename T, int NUM_THREADS>
 class ReductionBlock{
@@ -80,36 +73,6 @@ public:
 
 };
 
-/*
-template<
-    int BLOCK_THREADS,
-    int ITEMS_PER_THREAD,
-    BlockReduceAlgorithm ALGORITHM>
-__global__ void BlockSumKernel(
-        int *d_in,
-        int *d_out,
-        clock_t *d_elapsed)
-{
-    typedef BlockReduce<int, BLOCK_THREADS, ALGORITHM> BlockReduceT;
-
-    __shared__ typename BlockReduceT::TempStorage temp_storage;
-
-    int data[ITEMS_PER_THREAD];
-    LoadDirectStriped<BLOCK_THREADS>(threadIdx.x, d_in, data);
-
-    clock_t start = clock();
-
-    int aggregate = BlockReduceT(temp_storage).Sum(data);
-
-    clock_t stop = clock();
-
-    if(threadIdx.x == 0)
-    {
-        *d_elapsed = (start > stop) ? start - stop : stop - start;
-        *d_out = aggregate;
-    }
-}
-*/
 
 template<int NUM_THREADS>
 __global__ void BlockSumKernel(
@@ -132,11 +95,85 @@ int Initialize(int *h_in, int *h_out, int num_items)
         h_out[i] = 0;
         inclusive += h_in[i];
     }
+    return inclusive;
+}
+
+void Launcher(int *d_in, int *d_out, int N, dim3 dimGrid){
+    int n = 1;
+    dim3 dimBlock(1,1,1);
+
+    if(N > 256 && N <= 512) {
+        dimBlock.x = 512;
+    }
+    if(N > 128 && N <= 256) {
+        dimBlock.x = 256;
+    }
+    if(N > 64 && N <= 128) {
+        dimBlock.x = 128;
+    }
+    if(N > 32 && N <= 64) {
+        dimBlock.x = 64;
+    }
+    if(N > 16 && N <= 32) {
+        dimBlock.x = 32;
+    }
+    if(N > 8  && N <= 16) {
+        dimBlock.x = 16;
+    }
+    if(N > 4 && N <= 8) {
+        dimBlock.x = 8;
+    }
+    if(N > 2 && N <= 4) {
+        dimBlock.x = 4;
+    }
+    if(N > 1 && N <= 2){
+        dimBlock.x = 2;
+    }
+    if(N == 1) {
+        dimBlock.x = 1;
+    }
+
+    switch(dimBlock.x){
+        case 512:
+            BlockSumKernel<512><<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 256:
+            BlockSumKernel<256><<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 128:
+            BlockSumKernel<128><<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 64:
+            BlockSumKernel<64> <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 32:
+            BlockSumKernel<32> <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 16:
+            BlockSumKernel<16> <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 8:
+            BlockSumKernel<8>  <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 4:
+            BlockSumKernel<4>  <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 2:
+            BlockSumKernel<2>  <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+        case 1:
+            BlockSumKernel<1>  <<<dimGrid, dimBlock>>>(d_in, d_out, N); break;
+    }
+   
+}
+
+
+void DeviceReduce(int *d_in, int *d_out, int N)
+{
+    if(N <= 512) {
+        Launcher(d_in, d_out, N, dim3(1,1,1));
+    }
+    if(N > 512) {
+        dim3 launch0(N/512 + N % 512 > 1 ? 1 : 0, 1, 1);
+        Launcher(d_in, d_out, N, launch0);
+        Launcher(d_out, d_out, launch0.x, dim3(1,1,1));
+    }
 }
 
 int main()
 {
-    const int BLOCK_THREADS = 512;
+    for(int BLOCK_THREADS= 8388608; BLOCK_THREADS > 1; BLOCK_THREADS = BLOCK_THREADS - 5555){
     const int ITEMS_PER_THREAD = 1;
 
     const int TILE_SIZE = BLOCK_THREADS * ITEMS_PER_THREAD;
@@ -150,9 +187,17 @@ int main()
 
     cudaMemcpy(d_in, h_in, sizeof(int) * TILE_SIZE, cudaMemcpyHostToDevice);
     cudaMemcpy(d_out, h_gpu, sizeof(int) * TILE_SIZE, cudaMemcpyHostToDevice);
-//    BlockSumKernel<BLOCK_THREADS, ITEMS_PER_THREAD, BLOCK_REDUCE_WARP_REDUCTIONS> <<<dim3(1,1,1), dim3(128,1,1) >>>(d_in, d_out, d_elapsed);
-
-    BlockSumKernel<BLOCK_THREADS> <<<dim3(1,1,1), dim3(128,1,1) >>>(d_in, d_out, BLOCK_THREADS);
+    DeviceReduce(d_in, d_out, BLOCK_THREADS);
     cudaMemcpy(h_gpu, d_out, sizeof(int), cudaMemcpyDeviceToHost);
-    std::cout<<h_gpu[0]<<std::endl;
+    if(h_gpu[0] != h_aggregate) {
+        std::cout<<"Error at: "<<BLOCK_THREADS<<std::endl;
+        std::cout<<"Got: "<<h_gpu[0]<<" Expected: "<<h_aggregate<<std::endl;
+        exit(0);
+    }
+    std::cout<<"Running at N = "<<BLOCK_THREADS<<std::endl; 
+    cudaFree(d_in);
+    cudaFree(d_out);
+    delete h_in;
+    delete h_gpu;
+    } 
 }
