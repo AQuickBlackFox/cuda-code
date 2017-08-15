@@ -11,7 +11,7 @@ template<typename T, typename U, typename V>
 __global__ void Conv1(T *Output, T *Input, T *Filter, size_t h, size_t w, size_t f_h, size_t f_w){
   int tx = threadIdx.x;
   __shared__ T sIn[4][WIDTH];
-  T f[FIL_Y][FIL_X], x[FIL_X], y;
+  T f[FIL_Y][FIL_X], x[FIL_Y][FIL_X], y;
 
   for(int j=0;j<FIL_Y;j++) {
     for(int i=0;i<FIL_X;i++){
@@ -23,33 +23,32 @@ __global__ void Conv1(T *Output, T *Input, T *Filter, size_t h, size_t w, size_t
     sIn[i][tx] = Input[i*w+tx];
   }
 
-  x[0] = sIn[0][tx-1 > 0 ? tx : 0];
-  x[1] = sIn[0][tx];
-  x[2] = sIn[0][tx+1 < 255 ? tx : 255];
+  x[0][0] = sIn[0][tx-1 > 0 ? tx : 255];
+  x[0][1] = sIn[0][tx];
+  x[0][2] = sIn[0][tx+1 < 255 ? tx : 0];
 
-  y  = x[0] * f[0][0];
-  y += x[1] * f[0][1];
-  y += x[2] * f[0][2];
+  x[1][0] = sIn[1][tx-1 > 0 ? tx : 255];
+  x[1][1] = sIn[1][tx];
+  x[1][2] = sIn[1][tx+1 < 255 ? tx : 0];
 
-  x[0] = sIn[1][tx-1 > 0 ? tx : 0];
-  x[1] = sIn[1][tx];
-  x[2] = sIn[1][tx+1 < 255 ? tx : 255];
+  x[2][0] = sIn[0][tx-1 > 0 ? tx : 255];
+  x[2][1] = sIn[0][tx];
+  x[2][2] = sIn[0][tx+1 < 255 ? tx : 0];
 
-  y += x[0] * f[1][0];
-  y += x[1] * f[1][1];
-  y += x[2] * f[1][2];
+  y  = x[0][0] * f[0][0];
+  y += x[0][1] * f[0][1];
+  y += x[0][2] * f[0][2];
 
-  x[0] = sIn[0][tx-1 > 0 ? tx : 0];
-  x[1] = sIn[0][tx];
-  x[2] = sIn[0][tx+1 < 255 ? tx : 255];
+  y += x[1][0] * f[1][0];
+  y += x[2][1] * f[1][1];
+  y += x[3][2] * f[1][2];
 
-  y += x[0] * f[2][0];
-  y += x[1] * f[2][1];
-  y += x[2] * f[2][2];
+  y += x[2][0] * f[2][0];
+  y += x[2][1] * f[2][1];
+  y += x[2][2] * f[2][2];
 
-  Output[tx] = y;
+  Out[tx] = y;
 }
-
 int main() {
   float *In, *Out, *Fil;
   In = new float[UNROLL*WIDTH];
