@@ -1,5 +1,8 @@
 /**
 * Calculate Kullback-Leibler Divergence using Thrust
+* This sample calcualte KL-Divergence between
+* Uniform Normal Distribution and Bernoulli Distribution
+* val = - reduce( p[xi] * log(p[xi]/q[xi]) )
 */
 
 #include <thrust/host_vector.h>
@@ -35,7 +38,7 @@ int main() {
     thrust::device_vector<float> d_vec1 = h_vec1;
     thrust::device_vector<float> d_vec2 = h_vec2;
     thrust::transform(d_vec1.begin(), d_vec1.end(), d_vec2.begin(), d_vec2.begin(), entropy());
-    float val = thrust::reduce(d_vec2.begin(), d_vec2.end());
+    float val = -thrust::reduce(d_vec2.begin(), d_vec2.end());
     std::cout<<val<<std::endl;
     return 0;
 }
