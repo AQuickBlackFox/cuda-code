@@ -3,6 +3,16 @@
 #include<iostream>
 #include<cassert>
 
+#include <time.h>
+#include <sys/time.h>
+#define USECPSEC 1000000ULL
+
+unsigned long long dtime_usec(unsigned long long start) {
+    timeval tv;
+    gettimeofday(&tv, 0);
+    return ((tv.tv_sec*USECPSEC)+tv.tv_usec)-start;
+}
+
 template<typename T, int NUM_THREADS>
 class ReductionBlock{
     T sum = 0;
@@ -187,14 +197,20 @@ int main()
 
     cudaMemcpy(d_in, h_in, sizeof(int) * TILE_SIZE, cudaMemcpyHostToDevice);
     cudaMemcpy(d_out, h_gpu, sizeof(int) * TILE_SIZE, cudaMemcpyHostToDevice);
+    unsigned long long dt = dtime_usec(0);
     DeviceReduce(d_in, d_out, BLOCK_THREADS);
+    cudaDeviceSynchronize();
+    dt = dtime_usec(dt);
+    double et = dt / (double)USECPSEC;
+    double bw = (double)(sizeof(int) * TILE_SIZE) / et;
     cudaMemcpy(h_gpu, d_out, sizeof(int), cudaMemcpyDeviceToHost);
     if(h_gpu[0] != h_aggregate) {
         std::cout<<"Error at: "<<BLOCK_THREADS<<std::endl;
         std::cout<<"Got: "<<h_gpu[0]<<" Expected: "<<h_aggregate<<std::endl;
         exit(0);
     }
-    std::cout<<"Running at N = "<<BLOCK_THREADS<<std::endl; 
+    std::cout<<"Running at N = "<<BLOCK_THREADS<<std::endl;
+    std::cout<<"BW: "<<bw<<std::endl;
     cudaFree(d_in);
     cudaFree(d_out);
     delete h_in;
