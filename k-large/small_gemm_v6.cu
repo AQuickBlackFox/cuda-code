@@ -102,7 +102,7 @@ __global__ void Kernel(float4* matrix_a, float4* matrix_b, float4* matrix_c) {
 
 int main() {
     size_t m = 128, n = 128, k = 128;
-    size_t num_iter = 1;
+    size_t num_iter = 1024;
     size_t size = m * n * sizeof(float);
     std::vector<float> A(m * k);
     std::vector<float> B(n * k);
@@ -135,11 +135,12 @@ int main() {
     std::cout << time << std::endl;
 
     cudaMemcpy(C.data(), Cd, size, cudaMemcpyDeviceToHost);
-
+/*
     for(size_t i = 0; i < n; i++) {
         for(size_t j = 0; j < m; j++) {
             std::cout << C[i + j * m] << " ";
         }
         std::cout << std::endl;
     }
+*/
 }

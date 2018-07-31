@@ -2,7 +2,7 @@ CC=/usr/local/cuda/bin/nvcc
 ARCH=sm_70
 CFLAGS=-arch=$(ARCH) -std=c++11
 
-all: v2 v4 v5 create_bin
+all: v2 v4 v5 v6 create_bin
 
 create_bin:
 	mkdir -p bin
@@ -16,8 +16,11 @@ v4: small_gemm_v4.cu
 v5: small_gemm_v5.cu
 	$(CC) $(CFLAGS) $< -o ./bin/$@
 
+v6: small_gemm_v6.cu
+	$(CC) $(CFLAGS) $< -o ./bin/$@
+
 clean:
 	rm -r ./bin
 
 test: all
-	./bin/v2; ./bin/v4; ./bin/v5
+	./bin/v2; ./bin/v4; ./bin/v5; ./bin/v6
